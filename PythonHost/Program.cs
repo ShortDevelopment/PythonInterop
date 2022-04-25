@@ -16,21 +16,24 @@ namespace PythonHost
                 engine.ExecuteString("import MyTestModule\n" +
                     "print(MyTestModule.__doc__)\n" +
                     "print(MyTestModule.TestMethod.__doc__)\n" +
-                    "print(MyTestModule.TestMethod())\n");
+                    "print(MyTestModule.TestMethod(1))\n");
             }
             Console.ReadLine();
         }
 
-        class MyTestModule : ICostumPythonModule
-        {
-            public string Name => "MyTestModule";
 
-            public string DocString => "Test Doc";
+        class MyTestModule : CostumPythonModule
+        {
+            public override string Name
+                => "MyTestModule";
+
+            public override string DocString
+                => "Test Doc";
 
             [PythonMethod(DocString = "Hallo!")]
             public static IntPtr TestMethod(IntPtr self, IntPtr args)
             {
-                return Python.PyLong_FromLong(2022);
+                return (PythonObject)2022;
             }
         }
     }

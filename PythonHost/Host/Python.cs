@@ -5,8 +5,18 @@ namespace PythonHost.Host
 {
     public static class Python
     {
-        [DllImport("python39")]
+        const string PythonLibName = "python39";
+
+        [DllImport(PythonLibName)]
         public static extern IntPtr PyLong_FromLong(long value);
+
+        [DllImport(PythonLibName)]
+        public static extern IntPtr PyFloat_FromDouble(double value);
+        [DllImport(PythonLibName)]
+        public static extern double PyFloat_AsDouble(IntPtr obj);
+
+        [DllImport(PythonLibName)]
+        public static extern IntPtr PyBool_FromLong(bool value);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct PyObject

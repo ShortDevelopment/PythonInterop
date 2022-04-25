@@ -7,10 +7,11 @@ namespace PythonHost.Host.Registration
 {
     internal class ModuleRegistration
     {
-        public static void RegisterCustomModule(ICostumPythonModule module)
+        public static void RegisterCustomModule(CostumPythonModule module)
         {
             IntPtr hModule = PyImport_AddModule(module.Name);
-            PyModule_SetDocString(hModule, module.DocString);
+            if (module.DocString != null && !string.IsNullOrEmpty(module.DocString))
+                PyModule_SetDocString(hModule, module.DocString);
 
             #region Functions
             List<PyMethodDef> methodDefinitions = new();
@@ -34,7 +35,7 @@ namespace PythonHost.Host.Registration
                 {
                     ml_name = Marshal.StringToHGlobalAnsi(name),
                     ml_meth = Marshal.GetFunctionPointerForDelegate(cfunction),
-                    ml_flags = PyMethodFlags.NoArgs,
+                    ml_flags = PyMethodFlags.VarArgs,
                     ml_doc = Marshal.StringToHGlobalAnsi(docString)
                 });
             }
