@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PythonHost": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

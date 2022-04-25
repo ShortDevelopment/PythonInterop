@@ -16,7 +16,7 @@ namespace PythonHost
                 engine.ExecuteString("import MyTestModule\n" +
                     "print(MyTestModule.__doc__)\n" +
                     "print(MyTestModule.TestMethod.__doc__)\n" +
-                    "print(MyTestModule.TestMethod(1))\n");
+                    "print(MyTestModule.TestMethod(123456, 'test'))\n");
             }
             Console.ReadLine();
         }
@@ -30,10 +30,15 @@ namespace PythonHost
             public override string DocString
                 => "Test Doc";
 
-            [PythonMethod(DocString = "Hallo!")]
-            public static IntPtr TestMethod(IntPtr self, IntPtr args)
+            [PythonFastCallMethod(DocString = "Hallo!")]
+            public unsafe static IntPtr TestMethod(IntPtr self, IntPtr argPtrs, int nargs)
             {
-                return (PythonObject)2022;
+                var args = Python.GetArgs(argPtrs, nargs);
+                IntPtr tuple = Python.PyTuple_New(3);
+                Python.PyTuple_SetItem(tuple, 0, (PythonObject)"Das ist ein test");
+                Python.PyTuple_SetItem(tuple, 1, (PythonObject)$"Hallo! {(int)args[0]}");
+                Python.PyTuple_SetItem(tuple, 2, (PythonObject)$"Hallo! {(string)args[1]}");
+                return tuple;
             }
         }
     }

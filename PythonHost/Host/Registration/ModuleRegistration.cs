@@ -7,7 +7,7 @@ namespace PythonHost.Host.Registration
 {
     internal class ModuleRegistration
     {
-        public static void RegisterCustomModule(CostumPythonModule module)
+        public unsafe static void RegisterCustomModule(CostumPythonModule module)
         {
             IntPtr hModule = PyImport_AddModule(module.Name);
             if (module.DocString != null && !string.IsNullOrEmpty(module.DocString))
@@ -17,7 +17,7 @@ namespace PythonHost.Host.Registration
             List<PyMethodDef> methodDefinitions = new();
             foreach (MethodInfo method in module.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public))
             {
-                PythonMethodAttribute? data = method.GetCustomAttribute<PythonMethodAttribute>();
+                PythonFastCallMethodAttribute? data = method.GetCustomAttribute<PythonFastCallMethodAttribute>();
                 if (data == null)
                     continue;
 
@@ -29,20 +29,20 @@ namespace PythonHost.Host.Registration
                 if (!string.IsNullOrEmpty(data.DocString))
                     docString = data.DocString;
 
-                PyCFunction cfunction = method.CreateDelegate<PyCFunction>();
+                PyCFunctionFast cfunction = method.CreateDelegate<PyCFunctionFast>();
 
-                methodDefinitions.Add(new PyMethodDef()
+                methodDefinitions.Add(new()
                 {
-                    ml_name = Marshal.StringToHGlobalAnsi(name),
-                    ml_meth = Marshal.GetFunctionPointerForDelegate(cfunction),
-                    ml_flags = PyMethodFlags.VarArgs,
-                    ml_doc = Marshal.StringToHGlobalAnsi(docString)
+                    Name = (char*)Marshal.StringToHGlobalAnsi(name),
+                    Pointer = (void*)Marshal.GetFunctionPointerForDelegate(cfunction),
+                    Flags = PyMethodFlags.FastCall,
+                    DocString = (char*)Marshal.StringToHGlobalAnsi(docString)
                 });
             }
 
-            methodDefinitions.Add(new PyMethodDef()
+            methodDefinitions.Add(new()
             {
-                ml_name = Marshal.StringToHGlobalUni(null)
+                Name = (char*)Marshal.StringToHGlobalUni(null)
             });
 
             if (PyModule_AddFunctions(hModule, methodDefinitions.ToArray()) != 0)
@@ -70,20 +70,26 @@ namespace PythonHost.Host.Registration
         [DllImport("python39")]
         private static extern int PyModule_AddFunctions(IntPtr module, PyMethodDef[] functions);
 
+        /// <summary>
+        /// <see href="https://docs.python.org/3/c-api/structures.html#c.PyMethodDef"/>
+        /// </summary>
         [StructLayout(LayoutKind.Sequential)]
-        private struct PyMethodDef
+        private unsafe struct PyMethodDef
         {
-            // [MarshalAs(UnmanagedType.LPStr)]
-            public IntPtr ml_name;
-            // [MarshalAs(UnmanagedType.FunctionPtr)]
-            public IntPtr ml_meth;
-            public PyMethodFlags ml_flags;
-            // [MarshalAs(UnmanagedType.LPStr)]
-            public IntPtr ml_doc;
+            public char* Name;
+            public void* Pointer;
+            public PyMethodFlags Flags;
+            public char* DocString;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public delegate IntPtr PyCFunction(IntPtr self, IntPtr args);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate IntPtr PyCFunctionFast(IntPtr self, IntPtr args, int nargs);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate IntPtr PyCFunctionFastWithKeywords(IntPtr self, IntPtr args, int nargs, IntPtr kwnames);
 
         [Flags]
         private enum PyMethodFlags : int
