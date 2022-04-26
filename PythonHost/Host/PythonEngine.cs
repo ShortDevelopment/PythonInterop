@@ -13,7 +13,8 @@ namespace PythonHost.Host
         private static extern void Py_Initialize();
         #endregion
 
-        public void AddCostumModule(CostumPythonModule module) => ModuleRegistration.RegisterCustomModule(module);
+        public void AddCostumModule(CostumPythonModule module)
+            => ModuleRegistration.RegisterCustomModule(module);
 
         #region Execute
         [DllImport("python39")]
