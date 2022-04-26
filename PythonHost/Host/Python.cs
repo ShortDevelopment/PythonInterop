@@ -7,6 +7,7 @@ namespace PythonHost.Host
     {
         const string PythonLibName = "python39";
 
+        #region Value Types
         [DllImport(PythonLibName)]
         public static extern IntPtr PyLong_FromLong(long value);
 
@@ -24,15 +25,18 @@ namespace PythonHost.Host
         [DllImport(PythonLibName)]
         public static extern IntPtr PyBool_FromLong(bool value);
 
+        [DllImport(PythonLibName)]
+        public static extern bool PyObject_IsTrue(IntPtr obj);
+
 
         [DllImport(PythonLibName)]
         public static extern IntPtr PyUnicode_FromString([MarshalAs(UnmanagedType.LPUTF8Str)] string value);
 
         [DllImport(PythonLibName)]
-        // [return: MarshalAs(UnmanagedType.LPUTF8Str)]
         public static extern IntPtr PyUnicode_AsUTF8AndSize(IntPtr obj, out int size);
+        #endregion
 
-
+        #region Tuples
         [DllImport(PythonLibName)]
         public static extern IntPtr PyTuple_New(int size);
 
@@ -44,7 +48,24 @@ namespace PythonHost.Host
 
         [DllImport(PythonLibName)]
         public static extern int PyTuple_SetItem(IntPtr tuple, int index, IntPtr obj);
+        #endregion
 
+        #region Objects
+        [DllImport(PythonLibName)]
+        public static extern IntPtr PyObject_Str(IntPtr obj);
+
+        [DllImport(PythonLibName)]
+        public static extern IntPtr PyObject_GetItem(IntPtr obj, IntPtr key);
+
+        [DllImport(PythonLibName)]
+        public static extern int PyObject_SetItem(IntPtr obj, IntPtr key, IntPtr value);
+
+        [DllImport(PythonLibName)]
+        public static extern int PyObject_DelItem(IntPtr obj, IntPtr key);
+
+        [DllImport(PythonLibName)]
+        public static extern int PyObject_Length(IntPtr obj);
+        #endregion
 
         public static unsafe PythonObject[] GetArgs(IntPtr args, int nargs)
         {
@@ -52,13 +73,6 @@ namespace PythonHost.Host
             for (int i = 0; i < nargs; i++)
                 result[i] = new(((IntPtr*)args)[i]);
             return result;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct PyObject
-        {
-            public int ob_refcnt;
-            public IntPtr ob_type;
         }
     }
 }
